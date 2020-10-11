@@ -1,4 +1,5 @@
 #include "byte_stream.hh"
+
 #include <string>
 
 // Dummy implementation of a flow-controlled in-memory byte stream.
