@@ -20,12 +20,11 @@ class ByteStream {
 
     bool _error = false;  //!< Flag indicating that the stream suffered an error.
     bool _input_ended = false;
-    bool _buffer_empty = false;
     size_t _capacity;
     size_t _buffer_size = 0;
     size_t _bytes_written = 0;
     size_t _bytes_read = 0;
-    std::list<char> _stream;
+    std::list<char> _stream {};
 
   public:
     //! Construct a stream with room for `capacity` bytes.
