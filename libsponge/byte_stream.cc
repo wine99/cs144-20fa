@@ -36,8 +36,6 @@ size_t ByteStream::write(const string &data) {
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
     const size_t peek_length = len > _buffer_size ? _buffer_size : len;
-    // TODO why wouldn't this work?
-    // list<char>::iterator it = _stream.begin();
     list<char>::const_iterator it = _stream.begin();
     advance(it, peek_length);
     return string(_stream.begin(), it);
