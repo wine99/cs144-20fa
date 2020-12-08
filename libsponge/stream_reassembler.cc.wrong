@@ -1,0 +1,83 @@
+// Wrong code for lab1 due to missunderstading of the task.
+// Does not take overlap into account.
+// Other than overlap, this code should work.
+
+
+/*** private members added in stream_reassembler.hh ***/
+size_t _firstUnread = 0;
+size_t _firstUnassembled = 0;
+size_t _firstUnacceptable;
+size_t _unassembledBytes = 0;
+bool _eof = false;
+struct seg {
+    size_t index;
+    size_t length;
+    std::string data;
+    bool operator<(const seg t) const { return index < t.index; }
+};
+std::set<seg> _storedSegs = {};
+
+bool _addNewSeg(const seg newSeg, const bool eof);
+void _stitchOutput();
+void _stitchOneSeg(const seg newSeg);
+
+
+/*** class methods implementations in stream_reassembler.cc ***/
+
+StreamReassembler::StreamReassembler(const size_t capacity)
+    : _output(capacity), _capacity(capacity), _firstUnacceptable(capacity) {}
+
+//! \details This function accepts a substring (aka a segment) of bytes,
+//! possibly out-of-order, from the logical stream, and assembles any newly
+//! contiguous substrings and writes them into the output stream in order.
+void StreamReassembler::push_substring(const string &data, const size_t index, const bool eof) {
+    seg newSeg = {index, data.length(), data};
+    if (_addNewSeg(newSeg, eof) == false)
+        return;
+    _stitchOutput();
+    if (empty() && _eof)
+        _output.end_input();
+}
+
+bool StreamReassembler::_addNewSeg(const seg newSeg, const bool eof) {
+    // check capacity limit, if unmeet limit, return false
+    // add to set
+    // if size of set doesn't change, return false
+    // update _UNASSEMBLEDBYTES and _EOF and return true
+    if (newSeg.index < _firstUnassembled || newSeg.index + newSeg.length > _firstUnacceptable)
+        return false;
+    size_t oldSize = _storedSegs.size();
+    _storedSegs.insert(newSeg);
+    if (_storedSegs.size() == oldSize)
+        return false;
+    _unassembledBytes += newSeg.length;
+    _eof = eof;
+    return true;
+}
+
+void StreamReassembler::_stitchOutput() {
+    // _FIRSTUNASSEMBLED is the expected next index
+    // compare _STOREDSEGS.begin()->index with _FIRSTUNASSEMBLED
+    // if equals, then _STITCHONESEG() and erase this seg from set
+    // continue compare until not equal or empty
+    while (!_storedSegs.empty() && _storedSegs.begin()->index == _firstUnassembled) {
+        _stitchOneSeg(*_storedSegs.begin());
+        _storedSegs.erase(_storedSegs.begin());
+    }
+}
+
+void StreamReassembler::_stitchOneSeg(const seg newSeg) {
+    // write string of NEWSEG into _OUTPUT
+    // update _FIRSTUNASSEMBLED and _UNASSEMBLEDBYTES
+    // update _FIRSTUNREAD and then _FIRSTUNACCEPTABLE
+    // _stitchString(newSeg.data);
+    _output.write(newSeg.data);
+    _firstUnassembled += newSeg.length;
+    _unassembledBytes -= newSeg.length;
+    _firstUnread = *_output.peek_output(1).begin();
+    _firstUnacceptable = _firstUnread + _capacity;
+}
+
+size_t StreamReassembler::unassembled_bytes() const { return _unassembledBytes; }
+
+bool StreamReassembler::empty() const { return _unassembledBytes == 0; }
