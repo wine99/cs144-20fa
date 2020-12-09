@@ -98,18 +98,20 @@ void StreamReassembler::_merge_seg(seg &new_seg, const seg &other) {
     size_t n_end = new_seg.index + new_seg.length;
     size_t o_index = other.index;
     size_t o_end = other.index + other.length;
+    string new_data;
+    if (n_index <= o_index && n_end <= o_end) {
+        new_data = new_seg.data + other.data.substr(n_end - o_index, n_end - o_end);
+    } else if (n_index <= o_index && n_end >= o_end) {
+        new_data = new_seg.data;
+    } else if (n_index >= o_index && n_end <= o_end) {
+        new_data =
+            other.data.substr(0, n_index - o_index) + new_seg.data + other.data.substr(n_end - o_index, n_end - o_end);
+    } else /* if (n_index >= o_index && n_end <= o_end) */ {
+        new_data = other.data.substr(0, n_index - o_index) + new_seg.data;
+    }
     new_seg.index = n_index < o_index ? n_index : o_index;
     new_seg.length = (n_end > o_end ? n_end : o_end) - new_seg.index;
-    if (n_index <= o_index && n_end <= o_end) {
-        new_seg.data = new_seg.data + other.data.substr(n_end - o_index, n_end - o_end);
-    } else if (n_index <= o_index && n_end >= o_end) {
-        // do nothing because NEW_SEG contains OTHER
-    } else if (n_index >= o_index && n_end <= o_end) {
-        new_seg.data =
-            other.data.substr(0, n_index - o_index) + new_seg.data + other.data.substr(o_end - n_index, n_end - o_end);
-    } else /* if (n_index >= o_index && n_end <= o_end) */ {
-        new_seg.data = other.data.substr(0, n_index - o_index) + new_seg.data;
-    }
+    new_seg.data = new_data;
 }
 
 size_t StreamReassembler::unassembled_bytes() const {
