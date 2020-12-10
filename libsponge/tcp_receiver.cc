@@ -12,7 +12,8 @@ using namespace std;
 
 void TCPReceiver::segment_received(const TCPSegment &seg) {
     TCPHeader header = seg.header();
-    if (header.syn && _syn) return;
+    if (header.syn && _syn)
+        return;
     if (header.syn) {
         _syn = true;
         _isn = header.seqno.raw_value();
