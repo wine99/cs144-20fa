@@ -13,7 +13,7 @@ using namespace std;
 //! Transform an "absolute" 64-bit sequence number (zero-indexed) into a WrappingInt32
 //! \param n The input absolute 64-bit sequence number
 //! \param isn The initial sequence number
-WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) { return WrappingInt32{static_cast<uint32_t>(n) + isn.raw_value()}; }
+WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) { return isn + static_cast<uint32_t>(n); }
 
 //! Transform a WrappingInt32 into an "absolute" 64-bit sequence number (zero-indexed)
 //! \param n The relative sequence number
@@ -28,23 +28,25 @@ WrappingInt32 wrap(uint64_t n, WrappingInt32 isn) { return WrappingInt32{static_
 uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
     // understand the following code first
 
-    // uint32_t a = 1;
-    // uint32_t b = static_cast<uint32_t>((1UL << 32) - 1UL); // 4294967295
-    // uint32_t x = a - b;
-    // int32_t  y = a - b;
-    // 2 2
-    // uint32_t x = b - a;
-    // int32_t  y = b - a;
-    // 4294967294 -2
+    // 2 ^ 32 = 4294967296
 
     // uint32_t a = 1;
     // uint32_t b = 0;
     // uint32_t x = a - b;
     // int32_t  y = a - b;
-    // 1 1
+    // x=1 y=1
     // uint32_t x = b - a;
     // int32_t  y = b - a;
-    // 4294967295 -1
+    // x=4294967295 y=-1
+
+    // uint32_t a = 1;
+    // uint32_t b = static_cast<uint32_t>((1UL << 32) - 1UL);
+    // uint32_t x = a - b;
+    // int32_t  y = a - b;
+    // x=2 y=2
+    // uint32_t x = b - a;
+    // int32_t  y = b - a;
+    // x=4294967294 y=-2
 
     // STEP ranges from -UINT32_MAX/2 to UINT32_MAX/2
     // in most cases, just adding STEP to CHECKPOINT will get the absolute seq
