@@ -27,6 +27,11 @@ void TCPReceiver::segment_received(const TCPSegment &seg) {
 }
 
 optional<WrappingInt32> TCPReceiver::ackno() const {
+    // Return the corresponding 32bit seqno of _reassembler.first_unassembled().
+    // Translate from Stream Index to Absolute Sequence Number is simple, just add 1.
+    // If outgoing ack is corresponding to FIN
+    // (meaning FIN is received and all segs are assembled),
+    // add another 1.
     size_t shift = 1;
     if (_fin && _reassembler.unassembled_bytes() == 0)
         shift = 2;
@@ -35,4 +40,7 @@ optional<WrappingInt32> TCPReceiver::ackno() const {
     return {};
 }
 
-size_t TCPReceiver::window_size() const { return _capacity - stream_out().buffer_size(); }
+size_t TCPReceiver::window_size() const {
+    // equal to first_unacceptable - first_unassembled
+    return _capacity - stream_out().buffer_size();
+}
