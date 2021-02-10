@@ -4,16 +4,12 @@
 > https://cs144.github.io/
 >
 > My Repo
-> https://github.com/wine99/cs1...
+> https://github.com/wine99/cs144-20fa
 >
 
 ## Translating between 64-bit indexes and 32-bit seqnos
 
-### 任务
-
 [![ydf2M4.png](https://s3.ax1x.com/2021/02/09/ydf2M4.png)](https://imgchr.com/i/ydf2M4)
-
-### 解法
 
 注意 wrapping_integers.hh 中的这三个方法：
 
@@ -78,7 +74,52 @@ uint64_t unwrap(WrappingInt32 n, WrappingInt32 isn, uint64_t checkpoint) {
 
 ## Implementing the TCP receiver
 
+注意测试里面的特殊情况，例如
 
+- SYN with DATA
+- SYN with DATA with FIN
+- SYN + FIN
+- SYN + DATA with FIN + DATA
+- ...
+
+然后根据未通过的测试，一步步完善逻辑，测试全部通过后再重新简化代码，最终得到解法如下（部分思路见注释）：
+
+```cpp
+void TCPReceiver::segment_received(const TCPSegment &seg) {
+    TCPHeader header = seg.header();
+    if (header.syn && _syn)
+        return;
+    if (header.syn) {
+        _syn = true;
+        _isn = header.seqno.raw_value();
+    }
+    // note that fin flag seg can carry payload
+    if (_syn && header.fin)
+        _fin = true;
+    size_t absolute_seqno = unwrap(header.seqno, WrappingInt32(_isn), _checkpoint);
+    _reassembler.push_substring(seg.payload().copy(), header.syn ? 0 : absolute_seqno - 1, header.fin);
+    _checkpoint = absolute_seqno;
+}
+
+optional<WrappingInt32> TCPReceiver::ackno() const {
+    // Return the corresponding 32bit seqno of _reassembler.first_unassembled().
+    // Translate from Stream Index to Absolute Sequence Number is simple, just add 1.
+    // If outgoing ack is corresponding to FIN
+    // (meaning FIN is received and all segs are assembled),
+    // add another 1.
+    size_t shift = 1;
+    if (_fin && _reassembler.unassembled_bytes() == 0)
+        shift = 2;
+    if (_syn)
+        return wrap(_reassembler.first_unassembled() + shift, WrappingInt32(_isn));
+    return {};
+}
+
+size_t TCPReceiver::window_size() const {
+    // equal to first_unacceptable - first_unassembled
+    return _capacity - stream_out().buffer_size();
+}
+```
 
 ---
 
