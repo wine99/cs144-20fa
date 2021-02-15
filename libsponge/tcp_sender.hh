@@ -46,8 +46,8 @@ class TCPSender {
     // See test code send_window.cc line 113 why the commented code is wrong.
     bool ack_valid(uint64_t abs_ackno) {
         return abs_ackno <= _next_seqno &&
-              //  abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno) +
-              //          _segments_outstanding.front().length_in_sequence_space();
+               //  abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno) +
+               //          _segments_outstanding.front().length_in_sequence_space();
                abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno);
     }
 

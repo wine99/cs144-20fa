@@ -46,10 +46,10 @@ void TCPSender::fill_window() {
 
     if (_receiver_window_size) {
         while (_receiver_free_space) {
-            // size_t payload_size = min(_stream.buffer_size(), static_cast<size_t>(_receiver_free_space));
             TCPSegment seg;
-            // seg.payload() = _stream.read(min(payload_size, static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE)));
-            size_t payload_size = min({_stream.buffer_size(), static_cast<size_t>(_receiver_free_space), static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE)});
+            size_t payload_size = min({_stream.buffer_size(),
+                                       static_cast<size_t>(_receiver_free_space),
+                                       static_cast<size_t>(TCPConfig::MAX_PAYLOAD_SIZE)});
             seg.payload() = _stream.read(payload_size);
             if (_stream.eof() && static_cast<size_t>(_receiver_free_space) > payload_size) {
                 seg.header().fin = true;
@@ -109,11 +109,8 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     }
     if (!_segments_outstanding.empty()) {
         _receiver_free_space = static_cast<uint16_t>(
-            abs_ackno
-            + static_cast<uint64_t>(window_size)
-            - unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno)
-            - _bytes_in_flight
-        );
+            abs_ackno + static_cast<uint64_t>(window_size) -
+            unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno) - _bytes_in_flight);
     }
 
     // if ((_segments_outstanding.empty() && _bytes_in_flight > 0) ||
