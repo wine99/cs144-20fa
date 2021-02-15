@@ -41,7 +41,7 @@ void TCPSender::fill_window() {
     // If _stream is empty but input has not ended, do nothing.
     if (!_stream.buffer_size() && !_stream.eof())
         return;
-    if (_stream.eof() && _fin_sent)
+    if (_fin_sent)
         return;
 
     if (_receiver_window_size) {
