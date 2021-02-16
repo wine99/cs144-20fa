@@ -36,16 +36,8 @@ class TCPSender {
     bool _timer_running = false;
     std::queue<TCPSegment> _segments_outstanding{};
 
-    // See test code send_window.cc line 113 why the commented code is wrong.
-    bool ack_valid(uint64_t abs_ackno) {
-        return abs_ackno <= _next_seqno &&
-               //  abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno) +
-               //          _segments_outstanding.front().length_in_sequence_space();
-               abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno);
-    }
-
-  public:
-    void send_segment(TCPSegment &seg);
+    bool _ack_valid(uint64_t abs_ackno);
+    void _send_segment(TCPSegment &seg);
 };
 ```
 
@@ -168,6 +160,14 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
         _timer_running = false;
     // Note that test code will call it again.
     fill_window();
+}
+
+// See test code send_window.cc line 113 why the commented code is wrong.
+bool TCPSender::_ack_valid(uint64_t abs_ackno) {
+    return abs_ackno <= _next_seqno &&
+           //  abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno) +
+           //          _segments_outstanding.front().length_in_sequence_space();
+           abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno);
 }
 ```
 

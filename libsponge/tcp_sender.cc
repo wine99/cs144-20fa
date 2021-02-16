@@ -32,7 +32,7 @@ void TCPSender::fill_window() {
         _syn_sent = true;
         TCPSegment seg;
         seg.header().syn = true;
-        send_segment(seg);
+        _send_segment(seg);
         return;
     }
     // If SYN has not been acked, do nothing.
@@ -55,7 +55,7 @@ void TCPSender::fill_window() {
                 seg.header().fin = true;
                 _fin_sent = true;
             }
-            send_segment(seg);
+            _send_segment(seg);
             if (_stream.buffer_empty())
                 break;
         }
@@ -66,10 +66,10 @@ void TCPSender::fill_window() {
         if (_stream.eof()) {
             seg.header().fin = true;
             _fin_sent = true;
-            send_segment(seg);
+            _send_segment(seg);
         } else if (!_stream.buffer_empty()) {
             seg.payload() = _stream.read(1);
-            send_segment(seg);
+            _send_segment(seg);
         }
     }
 }
@@ -85,7 +85,7 @@ void TCPSender::ack_received(const WrappingInt32 ackno, const uint16_t window_si
     // fill window
     // update _receiver_window_size
     uint64_t abs_ackno = unwrap(ackno, _isn, _next_seqno);
-    if (!ack_valid(abs_ackno)) {
+    if (!_ack_valid(abs_ackno)) {
         // cout << "invalid ackno!\n";
         return;
     }
@@ -148,7 +148,15 @@ void TCPSender::send_empty_segment() {
     _segments_out.push(seg);
 }
 
-void TCPSender::send_segment(TCPSegment &seg) {
+// See test code send_window.cc line 113 why the commented code is wrong.
+bool TCPSender::_ack_valid(uint64_t abs_ackno) {
+    return abs_ackno <= _next_seqno &&
+           //  abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno) +
+           //          _segments_outstanding.front().length_in_sequence_space();
+           abs_ackno >= unwrap(_segments_outstanding.front().header().seqno, _isn, _next_seqno);
+}
+
+void TCPSender::_send_segment(TCPSegment &seg) {
     seg.header().seqno = wrap(_next_seqno, _isn);
     _next_seqno += seg.length_in_sequence_space();
     _bytes_in_flight += seg.length_in_sequence_space();
