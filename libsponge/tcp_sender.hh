@@ -42,6 +42,8 @@ class TCPSender {
     unsigned int _time_elapsed = 0;
     bool _timer_running = false;
     std::queue<TCPSegment> _segments_outstanding{};
+    // Lab4 modify:
+    // bool _fill_window_called_by_ack_received{false};
 
     bool _ack_valid(uint64_t abs_ackno);
     void _send_segment(TCPSegment &seg);

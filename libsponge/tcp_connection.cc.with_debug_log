@@ -23,13 +23,27 @@ size_t TCPConnection::time_since_last_segment_received() const { return _time_si
 bool TCPConnection::active() const { return _active; }
 
 void TCPConnection::segment_received(const TCPSegment &seg) {
+    // cout << "Receive: ";
+    // cout << "seqno: " << seg.header().seqno;
+    // cout << " ackno " << seg.header().ackno;
+    // cout << " ";
+    // if (seg.header().syn)
+    //     cout << "S";
+    // if (seg.header().ack)
+    //     cout << "A";
+    // if (seg.header().fin)
+    //     cout << "F";
+    // cout << " payload " << seg.payload().str();
+    // cout << " seg_length " << seg.length_in_sequence_space() << "\n";
     if (!_active)
         return;
     _time_since_last_segment_received = 0;
     // State: closed
     if (!_receiver.ackno().has_value() && _sender.next_seqno_absolute() == 0) {
-        if (!seg.header().syn)
+        if (!seg.header().syn) {
+            // cerr << "state: close. received no syn\n";
             return;
+        }
         _receiver.segment_received(seg);
         connect();
         return;
@@ -37,14 +51,18 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     // State: syn sent
     if (_sender.next_seqno_absolute() > 0 && _sender.bytes_in_flight() == _sender.next_seqno_absolute() &&
         !_receiver.ackno().has_value()) {
-        if (seg.payload().size())
+        if (seg.payload().size()) {
+            // cerr << "state: syn sent. received non zero playload\n";
             return;
+        }
         if (!seg.header().ack) {
             if (seg.header().syn) {
                 // simultaneous open
                 _receiver.segment_received(seg);
                 _sender.send_empty_segment();
+                return;
             }
+            // cerr << "state: syn sent. received no ack\n";
             return;
         }
         if (seg.header().rst) {
@@ -56,8 +74,8 @@ void TCPConnection::segment_received(const TCPSegment &seg) {
     }
     _receiver.segment_received(seg);
     _sender.ack_received(seg.header().ackno, seg.header().win);
-    // Lab3 behavior: fill_window() will directly return without sending any segment.
-    // See tcp_sender.cc line 42
+    // Lab3 behavior: fill_window will return without sending any segment
+    // if (_sender.stream_in().buffer_empty() && !_sender.stream_in().eof())
     if (_sender.stream_in().buffer_empty() && seg.length_in_sequence_space())
         _sender.send_empty_segment();
     if (seg.header().rst) {
@@ -86,6 +104,8 @@ void TCPConnection::tick(const size_t ms_since_last_tick) {
     if (_sender.consecutive_retransmissions() > TCPConfig::MAX_RETX_ATTEMPTS)
         unclean_shutdown();
     send_sender_segments();
+    // cout << "time_since_last: " << _time_since_last_segment_received;
+    // cout << " consecutive " << _sender.consecutive_retransmissions() << "\n";
 }
 
 void TCPConnection::end_input_stream() {
@@ -116,11 +136,22 @@ void TCPConnection::send_sender_segments() {
     while (!_sender.segments_out().empty()) {
         seg = _sender.segments_out().front();
         _sender.segments_out().pop();
+        // cout << "seqno: " << seg.header().seqno;
         if (_receiver.ackno().has_value()) {
             seg.header().ack = true;
             seg.header().ackno = _receiver.ackno().value();
             seg.header().win = _receiver.window_size();
+            // cout << " ackno " << seg.header().ackno;
         }
+        // cout << " ";
+        // if (seg.header().syn)
+        //     cout << "S";
+        // if (seg.header().ack)
+        //     cout << "A";
+        // if (seg.header().fin)
+        //     cout << "F";
+        // cout << " payload " << seg.payload().str();
+        // cout << " seg_length " << seg.length_in_sequence_space() << "\n";
         _segments_out.push(seg);
     }
     clean_shutdown();
