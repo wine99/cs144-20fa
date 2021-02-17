@@ -5,6 +5,7 @@
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
 #include "wrapping_integers.hh"
+#include "buffer.hh"
 
 #include <functional>
 #include <queue>

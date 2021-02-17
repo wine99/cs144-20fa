@@ -3,6 +3,7 @@
 
 #include <list>
 #include <string>
+#include "buffer.hh"
 
 //! \brief An in-order byte stream.
 
@@ -24,7 +25,7 @@ class ByteStream {
     size_t _buffer_size = 0;
     size_t _bytes_written = 0;
     size_t _bytes_read = 0;
-    std::list<char> _stream{};
+    BufferList _stream{};
 
   public:
     //! Construct a stream with room for `capacity` bytes.

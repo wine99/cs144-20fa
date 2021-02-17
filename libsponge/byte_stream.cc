@@ -17,37 +17,28 @@ using namespace std;
 ByteStream::ByteStream(const size_t capacity) : _capacity(capacity) {}
 
 size_t ByteStream::write(const string &data) {
-    size_t write_count = 0;
-    for (const char c : data) {
-        // not very efficient to do conditional in loop
-        if (_capacity - _buffer_size <= 0)
-            break;
-        else {
-            _stream.push_back(c);
-            ++_buffer_size;
-            ++_bytes_written;
-            ++write_count;
-        }
-    }
-
+    size_t write_count = data.size();
+    if (write_count > _capacity - _buffer_size)
+        write_count = _capacity - _buffer_size;
+    _stream.append(BufferList(move(string().assign(data.begin(), data.begin() + write_count)))); 
+    _buffer_size += write_count;
+    _bytes_written += write_count;
     return write_count;
 }
 
 //! \param[in] len bytes will be copied from the output side of the buffer
 string ByteStream::peek_output(const size_t len) const {
     const size_t peek_length = len > _buffer_size ? _buffer_size : len;
-    list<char>::const_iterator it = _stream.begin();
-    advance(it, peek_length);
-    return string(_stream.begin(), it);
+    string str = _stream.concatenate();
+    return string().assign(str.begin(), str.begin() + peek_length);
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
 void ByteStream::pop_output(const size_t len) {
     size_t pop_length = len > _buffer_size ? _buffer_size : len;
+    _stream.remove_prefix(pop_length);
     _bytes_read += pop_length;
     _buffer_size -= pop_length;
-    while (pop_length--)
-        _stream.pop_front();
 }
 
 //! Read (i.e., copy and then pop) the next "len" bytes of the stream
