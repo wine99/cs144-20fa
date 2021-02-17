@@ -1,9 +1,10 @@
 #ifndef SPONGE_LIBSPONGE_BYTE_STREAM_HH
 #define SPONGE_LIBSPONGE_BYTE_STREAM_HH
 
+#include "buffer.hh"
+
 #include <list>
 #include <string>
-#include "buffer.hh"
 
 //! \brief An in-order byte stream.
 

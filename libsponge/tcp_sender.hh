@@ -1,11 +1,11 @@
 #ifndef SPONGE_LIBSPONGE_TCP_SENDER_HH
 #define SPONGE_LIBSPONGE_TCP_SENDER_HH
 
+#include "buffer.hh"
 #include "byte_stream.hh"
 #include "tcp_config.hh"
 #include "tcp_segment.hh"
 #include "wrapping_integers.hh"
-#include "buffer.hh"
 
 #include <functional>
 #include <queue>

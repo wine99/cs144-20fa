@@ -20,7 +20,7 @@ size_t ByteStream::write(const string &data) {
     size_t write_count = data.size();
     if (write_count > _capacity - _buffer_size)
         write_count = _capacity - _buffer_size;
-    _stream.append(BufferList(move(string().assign(data.begin(), data.begin() + write_count)))); 
+    _stream.append(BufferList(move(string().assign(data.begin(), data.begin() + write_count))));
     _buffer_size += write_count;
     _bytes_written += write_count;
     return write_count;

@@ -272,18 +272,28 @@ void ByteStream::pop_output(const size_t len) {
 }
 ```
 
-注意到 playload() 是 Buffer 实例后，把 tcp_sender.cc 中 `fill_window()` 中的两行 payload() 赋值语句分别改为：
-
-```cpp
-seg.payload() = Buffer(move(_stream.read(payload_size)));
-seg.payload() = Buffer(move(_stream.read(1)));
-```
-
 ### 改动后的 benchmark
 
 [![y2KfoQ.png](https://s3.ax1x.com/2021/02/17/y2KfoQ.png)](https://imgchr.com/i/y2KfoQ)
 
+## webget revisited
 
+直接按照讲义中的步骤，把 Linux 自带的 TCPSocket，换成我们自己的实现。
+
+```cpp
+void get_URL(const string &host, const string &path) {
+    CS144TCPSocket sock1{};
+    sock1.connect(Address(host, "http"));
+    sock1.write("GET " + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+    while (!sock1.eof()) {
+        cout << sock1.read();
+    }
+    sock1.shutdown(SHUT_WR);
+    sock1.wait_until_closed();
+}
+```
+
+替换后 webget 依然 work（不知道为什么 WSL 替换后连接建立不起来，但在云主机上测试后没有问题），至此，手写 TCP 正式完成。
 
 ---
 
