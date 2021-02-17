@@ -31,6 +31,8 @@ LAB0 在 master 分支，LAB1 - 7 在对应名字的分支。
 + Don’t forget to include the “Connection: close” line in your client’s request. This tells the server that it shouldn’t wait around for your client to send any more requests after this one. Instead, the server will send one reply and then will immediately end its outgoing bytestream (the one from the server’s socket to your socket). You’ll discover that your incoming byte stream has ended because your socket will reach “EOF” (end of file) when you have read the entire byte stream coming from the server. That’s how your client will know that the server has finished its reply.
 + Make sure to read and print all the output from the server until the socket reaches “EOF” (end of file) — a single call to read is not enough.
 
+在 GET 请求中写明 `Connection: close` 可以让服务器马上进入连接释放的过程（发一个 FIN 过来），我们在发送完 GET 同样需要 `shutdown(SHUT_WR)`，进入连接释放过程（发一个 FIN 过去）。（不太理解的话，写完 Lab4，就能理解了。）
+
 ```cpp
 void get_URL(const string &host, const string &path) {
     // Your code here.
@@ -48,12 +50,11 @@ void get_URL(const string &host, const string &path) {
 
     TCPSocket sock1;
     sock1.connect(Address(host, "http"));
-
     sock1.write("GET " + path + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");
+    sock1.shutdown(SHUT_WR);
     while (!sock1.eof()) {
         cout << sock1.read();
     }
-    sock1.close();
 }
 ```
 
