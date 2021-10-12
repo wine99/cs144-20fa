@@ -20,7 +20,7 @@ size_t ByteStream::write(const string &data) {
     size_t write_count = data.size();
     if (write_count > _capacity - _buffer_size)
         write_count = _capacity - _buffer_size;
-    _stream.append(BufferList(move(string().assign(data.begin(), data.begin() + write_count))));
+    _stream.append(BufferList(string(data.begin(), data.begin() + write_count)));
     _buffer_size += write_count;
     _bytes_written += write_count;
     return write_count;
@@ -30,7 +30,7 @@ size_t ByteStream::write(const string &data) {
 string ByteStream::peek_output(const size_t len) const {
     const size_t peek_length = len > _buffer_size ? _buffer_size : len;
     string str = _stream.concatenate();
-    return string().assign(str.begin(), str.begin() + peek_length);
+    return string(str.begin(), str.begin() + peek_length);
 }
 
 //! \param[in] len bytes will be removed from the output side of the buffer
